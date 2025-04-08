@@ -1,62 +1,58 @@
-Step 1: Create Your Custom Jenkins Dockerfile
+Create Your Custom Jenkins Dockerfile
 📄 Dockerfile
-FROM jenkins/jenkins:lts
-
+FROM jenkins/jenkins
 USER root
-
 # Install Docker CLI
 RUN apt-get update && \
     apt-get install -y docker.io && \
     usermod -aG docker jenkins
 
 USER jenkins
-
 ✅ Explanation:
 USER root: Needed to install packages and modify groups.
 apt-get install docker.io: Installs Docker CLI inside Jenkins image.
 usermod -aG docker jenkins: So Jenkins user can run Docker without sudo.
 USER jenkins: Return to Jenkins user so container starts Jenkins properly.
+ Simple docker-compose.yml to Run Jenkins with Docker Access
+Here's a full working example:
+ docker-compose.yml
+version: '3.8'
+
+services:
+  jenkins:
+    image: jenkins/jenkins
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: jenkins-docker
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+volumes:
+  jenkins_home:
+
+ Explanation:
+Component
+Purpose
+user: root
+Lets you install packages or run Docker
+- /var/run/docker.sock:/...
+Mounts host Docker socket into container
+jenkins_home volume
+Persists Jenkins data
+DOCKER_HOST=...
+Helps tools like Docker CLI locate the daemon
 
 
+🧪 How to Use It
+Save the above as docker-compose.yml
+Run:    docker compose up -d
+Access Jenkins at: http://localhost:8080
+Inside Jenkins (or docker exec -it jenkins-docker bash):
+docker ps          # ✅ should now work!
 
- Step 2: Build Your Jenkins Image
-
-docker build -t my-jenkins-with-docker .
-
-
-🚀 Step 3: Run Jenkins with Docker Socket Mounted
-docker run -d \
-  --name jenkins-docker \
-  -p 8080:8080 -p 50000:50000 \
-  -v jenkins_home:/var/jenkins_home \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  my-jenkins-with-docker
-
-✅ Why this works:
-The container has Docker CLI (docker command).
-It talks to your host Docker using the mounted socket.
-Jenkins can now build Docker images and run containers on your host.
-
-
-
-🔒 Important Note:
-The volume -v /var/run/docker.sock:/var/run/docker.sock gives Jenkins access to host Docker. It’s powerful, but be aware it gives Jenkins full control over Docker on your machine. Use with caution in shared/multi-user environments.
-
-🧪 Optional: Verify Inside the Container
-docker exec -it jenkins-docker bash
-docker --version     # should show Docker CLI version
-docker ps            # should show host containers
-
-
-🎯 Next Steps:
-Set up your Jenkins pipeline as discussed before
-Add DockerHub credentials in Jenkins
-Use docker build, docker push, and even docker run in your Jenkins pipeline
-
-
-
-Would you like me to:
-Help with a custom Jenkins image that includes Maven + Docker?
-Add plugins in your Dockerfile as well (like Docker Pipeline, GitHub, etc)?
-Guide you in making this Jenkins container start with pre-installed jobs or config?
 
