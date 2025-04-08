@@ -33,7 +33,8 @@ pipeline{
         }
        stage('run container'){
            steps{
-               sh '''    
+               sh '''  
+               docker stop springapp || true 
                docker rm -f springapp || true
                
                docker run --name springapp \
