@@ -38,6 +38,10 @@ pipeline{
                docker rm -f springapp || true
                
                docker run --name springapp \
+               --log-driver=fluentd \
+               --log-opt fluentd-address=fluentd:24224 \
+               --log-opt tag=springapp \
+        
               --network efk-net \
               -p 8082:8080 \
               -d ${IMAGE_NAME}
@@ -45,9 +49,6 @@ pipeline{
            }
        }
         
-        //  --log-driver=fluentd \
-          //    --log-opt fluentd-address=fluentd:24224 \
-         //     --log-opt tag=springapp \
         
     }
 }
