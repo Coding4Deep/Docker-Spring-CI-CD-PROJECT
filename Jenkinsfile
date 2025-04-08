@@ -29,7 +29,11 @@ pipeline{
            steps{
                sh '''
                    docker stop springapp || true
+                   
                    docker rm springapp || true
+                   --log-driver=fluentd \
+                   --log-opt fluentd-address=fluentd:24224 \
+                   --log-opt tag=springapp \
                    docker run --name springapp -p 8082:8080 -d ${IMAGE_NAME}
                '''
            }
