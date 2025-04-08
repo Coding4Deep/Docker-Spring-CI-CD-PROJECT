@@ -9,6 +9,12 @@ pipeline{
                 git branch:'main',url:'https://github.com/Coding4Deep/Docker-Spring-CI-CD-PROJECT.git'
             }
         }
+          stage('Create Network') {
+            steps {
+                sh 'docker network create efk-net || true'
+                sh 'docker network ls'
+            }
+        }
        stage('building image'){
            steps{
                sh 'docker build -t ${IMAGE_NAME} .'
@@ -27,14 +33,14 @@ pipeline{
         }
        stage('run container'){
            steps{
-               sh '''
-                   docker stop springapp || true
-                   
-                   docker rm springapp || true
-                   --log-driver=fluentd \
-                   --log-opt fluentd-address=fluentd:24224 \
-                   --log-opt tag=springapp \
-                   docker run --name springapp -p 8082:8080 -d ${IMAGE_NAME}
+               sh '''    
+              docker run --name springapp \
+              --log-driver=fluentd \
+              --log-opt fluentd-address=fluentd:24224 \
+              --log-opt tag=springapp \
+              --network efk-net \
+              -p 8082:8080 \
+              -d ${IMAGE_NAME}
                '''
            }
        }
