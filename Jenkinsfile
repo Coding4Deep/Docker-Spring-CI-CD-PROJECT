@@ -34,7 +34,9 @@ pipeline{
        stage('run container'){
            steps{
                sh '''    
-              docker run --name springapp \
+               docker rm -f springapp || true
+               
+               docker run --name springapp \
               --network efk-net \
               -p 8082:8080 \
               -d ${IMAGE_NAME}
