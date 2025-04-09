@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Coding4Deep/EFK-STACK-PROJECT.git'
+            }
+        }
+        stage('Create Volume & Network') {
+            steps {
+                sh '''
+                    docker volume create efk-volume || true
+                    docker network create efk-net || true
+                '''
+            }
+        }
+        stage('Run Elasticsearch') {
+            steps {
+                sh ''' 
+                    docker stop elasticsearch || true
+                    docker rm -f elasticsearch || true
+                    docker run -d --name elasticsearch \
+                      --network efk-net \
+                      -e "discovery.type=single-node" \
+                      -e "xpack.security.enabled=false" \
+                      -v efk-volume:/usr/share/elasticsearch/data \
+                      -p 9200:9200 \
+                      docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+                '''
+            }
+        }
+        stage('Run Kibana') {
+            steps {
+                sh '''
+                    docker stop kibana || true
+                    docker rm -f kibana || true
+                    docker run -d --name kibana \
+                      --network efk-net \
+                      -e "ELASTICSEARCH_HOSTS=http://elasticsearch:9200" \
+                      -p 5601:5601 \
+                      docker.elastic.co/kibana/kibana:7.17.10
+                '''
+            }
+        }
+        stage('Run Fluentd with Volume Mounts') {
+            steps {
+                sh '''
+                    docker stop fluentd || true
+                    docker rm -f fluentd || true
+                    docker run -d --name fluentd \
+                      --network efk-net \
+                      -e FLUENT_UID=0 \
+                      -p 24224:24224 \
+                      fluent/fluentd:v1.16-1
+
+                '''
+            }
+        }
+    }
+}
