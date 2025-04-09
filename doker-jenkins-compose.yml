@@ -1,0 +1,21 @@
+
+version: '3.8'
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: docker-jenkins-dockerfile
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    container_name: jenkins-docker
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+volumes:
+  jenkins_home:
